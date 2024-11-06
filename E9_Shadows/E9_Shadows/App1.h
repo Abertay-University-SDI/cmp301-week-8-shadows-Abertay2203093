@@ -21,7 +21,6 @@ public:
 protected:
 	bool render();
 
-	void shadowRTTPass();
 	void depthPass();
 	void finalPass();
 	void gui();
@@ -30,6 +29,11 @@ private:
 	TextureShader* textureShader;
 	PlaneMesh* mesh;
 	OrthoMesh* orthoMesh;
+
+	CubeMesh* cube;
+	SphereMesh* sphere;
+	SphereMesh* lightVisualSphere;
+
 
 	Light* light;
 	AModel* model;
@@ -41,10 +45,17 @@ private:
 	ShadowMap* shadowMap;
 
 
-	float inputShadowWidth = 50;
-	float inputShadowLength = 50;
+	float inputLightWidth = 50;
+	float inputLightLength = 50;
 
 	bool showShadowDebug = false;
+
+	float heightOffset = 0;
+	float widthOffset = 0;
+	float lengthOffset = 0;
+
+	float lightPosition[3] = {0, 0, -10};
+	float lightDirection[3] = { 0.0f, -0.7f, 0.7f };
 };
 
 #endif
