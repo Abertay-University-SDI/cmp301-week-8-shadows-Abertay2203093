@@ -15,6 +15,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	// Create Mesh object and shader object
 	mesh = new PlaneMesh(renderer->getDevice(), renderer->getDeviceContext());
 	model = new AModel(renderer->getDevice(), "res/teapot.obj");
+	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth, screenHeight);	// Full screen size
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
 
 	// initial shaders
@@ -23,13 +24,15 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	shadowShader = new ShadowShader(renderer->getDevice(), hwnd);
 
 	// Variables for defining shadow map
-	int shadowmapWidth = 1024;
-	int shadowmapHeight = 1024;
-	int sceneWidth = 100;
-	int sceneHeight = 100;
+	int shadowmapWidth = 1024*4;
+	int shadowmapHeight = 1024*4;
+	int sceneWidth = 50;
+	int sceneHeight = 50;
 
 	// This is your shadow map
 	shadowMap = new ShadowMap(renderer->getDevice(), shadowmapWidth, shadowmapHeight);
+
+	shadowRT = new RenderTexture(renderer->getDevice(), screenWidth, screenHeight, SCREEN_NEAR, SCREEN_DEPTH);
 
 	// Configure directional light
 	light = new Light();
@@ -85,6 +88,9 @@ bool App1::render()
 void App1::depthPass()
 {
 	// Set the render target to be the render to texture.
+	shadowRT->setRenderTarget(renderer->getDeviceContext());
+	shadowRT->clearRenderTarget(renderer->getDeviceContext(), 1.0f, 1.0f, 1.0f, 1.0f);
+	
 	shadowMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
 
 	// get the world, view, and projection matrices from the camera and d3d objects.
@@ -140,6 +146,24 @@ void App1::finalPass()
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, textureMgr->getTexture(L"brick"), shadowMap->getDepthMapSRV(), light);
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
+	// Render ortho mesh
+	renderer->setZBuffer(false);
+
+	float width = 600;
+	float pixels_free = 600 - shadowRT->getTextureWidth();
+
+	XMMATRIX orthoWorldMatrix = worldMatrix;
+	//orthoWorldMatrix *= XMMatrixTranslation(pixels_free/2, 0, 0);
+
+	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();  // ortho matrix for 2D rendering
+	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();	// Default camera position for orthographic rendering
+	orthoMesh->sendData(renderer->getDeviceContext());
+	shadowShader->setShaderParameters(renderer->getDeviceContext(), orthoWorldMatrix, orthoViewMatrix, orthoMatrix, shadowRT->getShaderResourceView(), shadowMap->getDepthMapSRV(), light);
+	//shadowShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
+
+	renderer->setZBuffer(true);
+
+
 	gui();
 	renderer->endScene();
 }
@@ -156,6 +180,12 @@ void App1::gui()
 	// Build UI
 	ImGui::Text("FPS: %.2f", timer->getFPS());
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+
+	ImGui::SliderFloat("Shadow Width", &inputShadowWidth, 5, 100);
+	ImGui::SliderFloat("Shadow Length", &inputShadowLength, 5, 100);
+
+	light->generateOrthoMatrix((float)inputShadowWidth, (float)inputShadowLength, 0.1f, 100.f);
+
 
 	// Render UI
 	ImGui::Render();

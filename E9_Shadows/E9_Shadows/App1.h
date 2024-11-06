@@ -20,6 +20,8 @@ public:
 
 protected:
 	bool render();
+
+	void shadowRTTPass();
 	void depthPass();
 	void finalPass();
 	void gui();
@@ -27,13 +29,20 @@ protected:
 private:
 	TextureShader* textureShader;
 	PlaneMesh* mesh;
+	OrthoMesh* orthoMesh;
 
 	Light* light;
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
 
+	RenderTexture* shadowRT;
+
 	ShadowMap* shadowMap;
+
+
+	float inputShadowWidth = 50;
+	float inputShadowLength = 50;
 };
 
 #endif
