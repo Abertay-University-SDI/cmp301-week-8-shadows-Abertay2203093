@@ -147,23 +147,24 @@ void App1::finalPass()
 	shadowShader->render(renderer->getDeviceContext(), model->getIndexCount());
 
 	// Render ortho mesh
-	renderer->setZBuffer(false);
+	if (showShadowDebug) {
+		renderer->setZBuffer(false);
 
-	float width = 600;
-	float pixels_free = 600 - shadowRT->getTextureWidth();
+		float width = 600;
+		float pixels_free = 600 - shadowRT->getTextureWidth();
 
-	XMMATRIX orthoWorldMatrix = worldMatrix;
-	//orthoWorldMatrix *= XMMatrixTranslation(pixels_free/2, 0, 0);
+		XMMATRIX orthoWorldMatrix = worldMatrix;
+		//orthoWorldMatrix *= XMMatrixTranslation(pixels_free/2, 0, 0);
 
-	XMMATRIX orthoMatrix = renderer->getOrthoMatrix();  // ortho matrix for 2D rendering
-	XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();	// Default camera position for orthographic rendering
-	orthoMesh->sendData(renderer->getDeviceContext());
-	shadowShader->setShaderParameters(renderer->getDeviceContext(), orthoWorldMatrix, orthoViewMatrix, orthoMatrix, shadowRT->getShaderResourceView(), shadowMap->getDepthMapSRV(), light);
-	//shadowShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
+		XMMATRIX orthoMatrix = renderer->getOrthoMatrix();  // ortho matrix for 2D rendering
+		XMMATRIX orthoViewMatrix = camera->getOrthoViewMatrix();	// Default camera position for orthographic rendering
+		orthoMesh->sendData(renderer->getDeviceContext());
+		shadowShader->setShaderParameters(renderer->getDeviceContext(), orthoWorldMatrix, orthoViewMatrix, orthoMatrix, shadowRT->getShaderResourceView(), shadowMap->getDepthMapSRV(), light);
+		shadowShader->render(renderer->getDeviceContext(), orthoMesh->getIndexCount());
 
-	renderer->setZBuffer(true);
-
-
+		renderer->setZBuffer(true);
+	}
+	
 	gui();
 	renderer->endScene();
 }
@@ -180,6 +181,8 @@ void App1::gui()
 	// Build UI
 	ImGui::Text("FPS: %.2f", timer->getFPS());
 	ImGui::Checkbox("Wireframe mode", &wireframeToggle);
+
+	ImGui::Checkbox("Shadow debug mode", &showShadowDebug);
 
 	ImGui::SliderFloat("Shadow Width", &inputShadowWidth, 5, 100);
 	ImGui::SliderFloat("Shadow Length", &inputShadowLength, 5, 100);

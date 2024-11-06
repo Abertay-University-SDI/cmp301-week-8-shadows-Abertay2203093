@@ -43,6 +43,8 @@ private:
 
 	float inputShadowWidth = 50;
 	float inputShadowLength = 50;
+
+	bool showShadowDebug = false;
 };
 
 #endif
