@@ -31,11 +31,14 @@ private:
 	OrthoMesh* orthoMesh;
 
 	CubeMesh* cube;
+	PlaneMesh* plane;
 	SphereMesh* sphere;
 	SphereMesh* lightVisualSphere;
 
 
 	Light* light;
+	Light* light2;
+
 	AModel* model;
 	ShadowShader* shadowShader;
 	DepthShader* depthShader;
@@ -49,13 +52,20 @@ private:
 	float inputLightLength = 50;
 
 	bool showShadowDebug = false;
+	bool shouldMove = false;
+
+	bool light1Enabled = false;
+	bool light2Enabled = false;
 
 	float heightOffset = 0;
 	float widthOffset = 0;
 	float lengthOffset = 0;
 
-	float lightPosition[3] = {0, 0, -10};
-	float lightDirection[3] = { 0.0f, -0.7f, 0.7f };
+	float lightDirection[3] = {-16, -41, 75};
+	float lightPosition[3] = { -15.0f, 16.0f, -7.7f };
+
+	float light2Direction[3] = { -16, -41, 75 };
+	float light2Position[3] = { 15.0f, 16.0f, -7.7f };
 };
 
 #endif

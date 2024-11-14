@@ -94,7 +94,8 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 }
 
 
-void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView*depthMap, Light* light)
+void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, 
+	const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView*depthMap, std::vector<Light*> lights)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
@@ -104,8 +105,8 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
 	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
 	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
-	XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
-	XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getOrthoMatrix());
+
+	
 	
 	// Lock the constant buffer so it can be written to.
 	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
@@ -113,8 +114,19 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	dataPtr->world = tworld;// worldMatrix;
 	dataPtr->view = tview;
 	dataPtr->projection = tproj;
-	dataPtr->lightView = tLightViewMatrix;
-	dataPtr->lightProjection = tLightProjectionMatrix;
+
+	// Add view for each light
+	for (int i = 0; i < MAX_LIGHTS; i++) {
+		if (i < lights.size()) {
+			Light* light = lights.at(i);
+			XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
+			XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getOrthoMatrix());
+
+			dataPtr->lightView[i] = tLightViewMatrix;
+			dataPtr->lightProjection[i] = tLightProjectionMatrix;
+		}		
+	}
+	
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
 
@@ -122,10 +134,24 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	// Send light data to pixel shader
 	deviceContext->Map(lightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	lightPtr = (LightBufferType*)mappedResource.pData;
-	lightPtr->ambient = light->getAmbientColour();
-	lightPtr->diffuse = light->getDiffuseColour();
-	lightPtr->direction = light->getDirection();
-	lightPtr->padding = 0.f;
+
+	// Add view for each light
+	for (int i = 0; i < MAX_LIGHTS; i++) {
+		if (i < lights.size()) {
+			Light* light = lights.at(i);
+
+			if (light != nullptr) {
+				lightPtr->lights[i].ambient = light->getAmbientColour();
+				lightPtr->lights[i].diffuse = light->getDiffuseColour();
+				lightPtr->lights[i].direction = light->getDirection();
+				lightPtr->lights[i].lightEnabled = true;
+			}
+		}
+		else {
+			lightPtr->lights[i].lightEnabled = false;
+		}
+	}
+
 	deviceContext->Unmap(lightBuffer, 0);
 	deviceContext->PSSetConstantBuffers(0, 1, &lightBuffer);
 
