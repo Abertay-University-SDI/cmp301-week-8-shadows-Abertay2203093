@@ -46,6 +46,7 @@ private:
 	RenderTexture* shadowRT;
 
 	ShadowMap* shadowMap;
+	ShadowMap* shadowMap2;
 
 
 	float inputLightWidth = 50;

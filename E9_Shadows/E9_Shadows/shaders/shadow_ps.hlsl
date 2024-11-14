@@ -1,9 +1,13 @@
 
 Texture2D shaderTexture : register(t0);
-Texture2D depthMapTexture : register(t1);
+SamplerState diffuseSampler : register(s0);
 
-SamplerState diffuseSampler  : register(s0);
+Texture2D depthMap1Texture : register(t1);
+Texture2D depthMap2Texture : register(t2);
+
 SamplerState shadowSampler : register(s1);
+
+// array it
 
 #define MAX_LIGHTS 8
 
@@ -76,6 +80,7 @@ float4 main(InputType input) : SV_TARGET
     float shadowMapBias = 0.005f;
     float4 totalColour = float4(0.f, 0.f, 0.f, 1.f);
     float4 textureColour = shaderTexture.Sample(diffuseSampler, input.tex);
+    Texture2D depthMapTextures[2] = { depthMap1Texture, depthMap2Texture };
 
     
     [unroll]
@@ -92,12 +97,15 @@ float4 main(InputType input) : SV_TARGET
             // Shadow test. Is or isn't in shadow
             if (hasDepthData(pTexCoord))
             {
-            // Has depth map data
-                if (!isInShadow(depthMapTexture, pTexCoord, input.lightViewPos[i], shadowMapBias))
+              
+
+                // Has depth map data
+                if (!isInShadow(depthMapTextures[i], pTexCoord, input.lightViewPos[i], shadowMapBias))
                 {
-                // is NOT in shadow, therefore light
+                    // is NOT in shadow, therefore light
                     colour = calculateLighting(-thisLight.direction, input.normal, thisLight.diffuse);
                 }
+               
             }
             colour = saturate(colour + thisLight.ambient);
         }

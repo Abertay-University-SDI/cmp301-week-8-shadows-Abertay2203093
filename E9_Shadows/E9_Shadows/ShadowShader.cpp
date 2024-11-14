@@ -95,7 +95,7 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 
 
 void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const XMMATRIX &worldMatrix, const XMMATRIX &viewMatrix, 
-	const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, ID3D11ShaderResourceView*depthMap, std::vector<Light*> lights)
+	const XMMATRIX &projectionMatrix, ID3D11ShaderResourceView* texture, std::vector<ShadowMap*> sceneMaps, std::vector<Light*> lights)
 {
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
@@ -105,8 +105,6 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
 	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
 	XMMATRIX tproj = XMMatrixTranspose(projectionMatrix);
-
-	
 	
 	// Lock the constant buffer so it can be written to.
 	deviceContext->Map(matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
@@ -157,7 +155,13 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 
 	// Set shader texture resource in the pixel shader.
 	deviceContext->PSSetShaderResources(0, 1, &texture);
-	deviceContext->PSSetShaderResources(1, 1, &depthMap);
+
+	// Load shadow maps
+	for (int i = 0; i < sceneMaps.size(); i++) {
+		ID3D11ShaderResourceView* depthMap = sceneMaps.at(i)->getDepthMapSRV();
+		deviceContext->PSSetShaderResources(1+i, 1, &depthMap);
+	}
+
 	deviceContext->PSSetSamplers(0, 1, &sampleState);
 	deviceContext->PSSetSamplers(1, 1, &sampleStateShadow);
 }
