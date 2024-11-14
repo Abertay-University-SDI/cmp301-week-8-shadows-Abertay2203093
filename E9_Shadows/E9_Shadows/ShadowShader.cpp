@@ -117,8 +117,11 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	for (int i = 0; i < MAX_LIGHTS; i++) {
 		if (i < lights.size()) {
 			Light* light = lights.at(i);
+			//XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
+			//XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getOrthoMatrix());
+
 			XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
-			XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getOrthoMatrix());
+			XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getProjectionMatrix());
 
 			dataPtr->lightView[i] = tLightViewMatrix;
 			dataPtr->lightProjection[i] = tLightProjectionMatrix;

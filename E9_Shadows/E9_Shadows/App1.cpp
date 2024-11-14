@@ -45,14 +45,14 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	light->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
 	light->setDirection(0.0f, -0.7f, 0.7f);
 	light->setPosition(0.f, 0.f, -10.f);
-	light->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+	light->generateProjectionMatrix(SCREEN_NEAR, SCREEN_DEPTH);//, 0.1f, 100.f);
 
 	light2 = new Light();
 	light2->setAmbientColour(0.3f, 0.3f, 0.3f, 1.0f);
 	light2->setDiffuseColour(1.0f, 1.0f, 1.0f, 1.0f);
 	light2->setDirection(0.0f, -0.7f, 0.7f);
 	light2->setPosition(0.f, 0.f, -10.f);
-	light2->generateOrthoMatrix((float)sceneWidth, (float)sceneHeight, 0.1f, 100.f);
+	light2->generateProjectionMatrix(SCREEN_NEAR, SCREEN_DEPTH);//, 0.1f, 100.f);
 
 }
 
@@ -109,17 +109,17 @@ void App1::depthPass()
 	// other stuff
 
 	// get the world, view, and projection matrices from the camera and d3d objects.
-	light->generateViewMatrix();
-	light2->generateViewMatrix();
 
 	for (int i = 0; i < 2; i++) {
 		Light* thisLight = sceneLights.at(i);
 		ShadowMap* thisMap = sceneMaps.at(i);
+		thisLight->generateProjectionMatrix(SCREEN_NEAR, SCREEN_DEPTH);
+		thisLight->generateViewMatrix();
 
 		thisMap->BindDsvAndSetNullRenderTarget(renderer->getDeviceContext());
 
 		XMMATRIX lightViewMatrix = thisLight->getViewMatrix();
-		XMMATRIX lightProjectionMatrix = thisLight->getOrthoMatrix();
+		XMMATRIX lightProjectionMatrix = thisLight->getProjectionMatrix();
 		XMMATRIX worldMatrix = renderer->getWorldMatrix();
 
 		worldMatrix = XMMatrixTranslation(-50.f, 0.f, -10.f);
@@ -151,12 +151,14 @@ void App1::depthPass()
 		cube->sendData(renderer->getDeviceContext());
 		depthShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, lightViewMatrix, lightProjectionMatrix);
 		depthShader->render(renderer->getDeviceContext(), cube->getIndexCount());
+
+		// Set back buffer as render target and reset view port.
+		renderer->setBackBufferRenderTarget();
+		renderer->resetViewport();
+		
 	}
 
-
-	// Set back buffer as render target and reset view port.
-	renderer->setBackBufferRenderTarget();
-	renderer->resetViewport();
+	
 }
 
 void App1::finalPass()
