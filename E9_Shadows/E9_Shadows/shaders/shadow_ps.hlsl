@@ -180,6 +180,21 @@ float4 main(InputType input) : SV_TARGET
     Texture2D depthMapTextures[2] = { depthMap1Texture, depthMap2Texture };
     float4 globalAmbient = float4(0.2f, 0.2f, 0.2f, 1.0f);
     
+    
+    int lightsEnabled = 0;
+    
+    [unroll]
+    for (int i = 0; i < MAX_LIGHTS; i++)
+    {
+        LightType thisLight = lights[i];
+        if (thisLight.lightEnabled)
+        {
+            lightsEnabled++;
+        }
+    }
+            
+      
+    
     [unroll]
     for (int i = 0; i < MAX_LIGHTS; i++)
     {
@@ -259,7 +274,7 @@ float4 main(InputType input) : SV_TARGET
             colour = saturate(colour + lightAmbient);
         }
       
-        totalColour += colour;
+        totalColour += colour / lightsEnabled;
 	   
     }
     
