@@ -43,6 +43,16 @@ public:
 	void setPosition(float x, float y, float z);								///< Set light position (for point lights)
 	void setLookAt(float x, float y, float z);									///< Set light lookAt (near deprecation)
 
+	void setSpotlightAttributes(
+		XMFLOAT4 specular,
+		float coneSize,
+		float matSpecPower,
+		XMFLOAT4 color,
+		XMFLOAT4 emissive,
+		float range,
+		XMFLOAT3 attenuation
+	);
+
 	// Getters
 	XMFLOAT4 getAmbientColour();		///< Get ambient colour, returns float4
 	XMFLOAT4 getDiffuseColour();		///< Get diffuse colour, returns float4
@@ -53,6 +63,13 @@ public:
 	XMMATRIX getViewMatrix();			///< Get light view matrix for shadow mapping, returns XMMATRIX
 	XMMATRIX getProjectionMatrix();		///< Get light projection matrix for shadow mapping, returns XMMATRIX
 	XMMATRIX getOrthoMatrix();			///< Get light orthographic matrix for shadow mapping, returns XMMATRIX
+
+	float getSpotlightCone();
+	float getMaterialSpecularPower();
+	XMFLOAT4 getSpotlightColor();
+	XMFLOAT4 getSpotlightEmissive();
+	float getSpotlightRange();
+	XMFLOAT3 getSpotlightAttenuation();
 
 
 protected:
@@ -65,7 +82,16 @@ protected:
 	XMMATRIX viewMatrix;
 	XMMATRIX projectionMatrix;
 	XMMATRIX orthoMatrix;
-	XMVECTOR lookAt; 
+	XMVECTOR lookAt;
+
+	float spotlightCone;
+	float materialSpecularPower;
+	XMFLOAT4 spotlightColor;
+	XMFLOAT4 spotlightEmissive;
+	float spotlightRange;
+	XMFLOAT3 spotlightAttenuation;
+
+
 };
 
 #endif

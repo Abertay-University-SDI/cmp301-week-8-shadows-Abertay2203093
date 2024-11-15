@@ -164,12 +164,15 @@ float calculateAttenuation(SpotLight light, float d)
     return 1.0f / (light.attenuation[0] + (light.attenuation[1] * d) + (light.attenuation[2] * d * d));
 }
 
+// Improved spotlight cone calculation
 float calculateSpotCone(SpotLight light, float3 lightVector)
 {
-    float minCos = cos(light.spot);
-    float maxCos = (minCos + 1.0f) / 2.0f;
+    float minCos = cos(light.spot); // The angle where light starts fading.
+    float maxCos = (minCos + 1.0f) / 2.0f; // Smoother edge transition.
     float cosAngle = dot(light.direction.xyz, -lightVector);
-    return smoothstep(minCos, maxCos, cosAngle);
+
+    // Ensure smooth transition at the edges with a better-defined range
+    return saturate((cosAngle - minCos) / (maxCos - minCos));
 }
 
 float4 main(InputType input) : SV_TARGET
@@ -205,7 +208,7 @@ float4 main(InputType input) : SV_TARGET
         {
              // Calculate the projected texture coordinates.
             float2 pTexCoord = getProjectiveCoords(input.lightViewPos[i]);
-            const bool isSpotlight = false;
+            const bool isSpotlight = true;
             float4 lightAmbient;
 
             if (isSpotlight)
@@ -227,7 +230,6 @@ float4 main(InputType input) : SV_TARGET
                 {
                     // is NOT in shadow, therefore light
                     
-                    const bool isSpotlight = false;
                     if (isSpotlight)
                     {
                         SpotLight spotlight = thisLight.spotlight;
@@ -258,6 +260,7 @@ float4 main(InputType input) : SV_TARGET
                         float4 finalColor = (globalAmbient + m_emissive + m_diffuse + m_specular) * textureColour; // (m_emissive + m_ambient + diffuse + specular) * textureColour;
                         lightAmbient = thisLight.spotlight.ambient;
 
+                        colour = finalColor;
                         //return finalColor;
                     }
                     else
@@ -269,9 +272,11 @@ float4 main(InputType input) : SV_TARGET
                     }
                     
                 }
-               
             }
+            
+            
             colour = saturate(colour + lightAmbient);
+
         }
       
         totalColour += colour / lightsEnabled;

@@ -110,6 +110,26 @@ void Light::setLookAt(float x, float y, float z)
 	lookAt = XMVectorSet(x, y, z, 1.0f);
 }
 
+void Light::setSpotlightAttributes(
+	XMFLOAT4 specular,
+	float coneSize,
+	float matSpecPower,
+	XMFLOAT4 color,
+	XMFLOAT4 emissive,
+	float range,
+	XMFLOAT3 attenuation
+)
+{
+
+	specularColour = specular;
+	spotlightCone = coneSize;
+	materialSpecularPower = matSpecPower;
+	spotlightColor = color;
+	spotlightEmissive = emissive;
+	spotlightRange = range;
+	spotlightAttenuation = attenuation;
+}
+
 XMMATRIX Light::getViewMatrix()
 {
 	return viewMatrix;
@@ -123,4 +143,34 @@ XMMATRIX Light::getProjectionMatrix()
 XMMATRIX Light::getOrthoMatrix()
 {
 	return orthoMatrix;
+}
+
+float Light::getSpotlightRange()
+{
+	return spotlightRange;
+}
+
+float Light::getSpotlightCone()
+{
+	return spotlightCone;
+}
+
+float Light::getMaterialSpecularPower()
+{
+	return materialSpecularPower;
+}
+
+XMFLOAT4 Light::getSpotlightColor()
+{
+	return spotlightColor;
+}
+
+XMFLOAT4 Light::getSpotlightEmissive()
+{
+	return spotlightEmissive;
+}
+
+XMFLOAT3 Light::getSpotlightAttenuation()
+{
+	return spotlightAttenuation;
 }

@@ -21,6 +21,7 @@ void App1::init(HINSTANCE hinstance, HWND hwnd, int screenWidth, int screenHeigh
 	model = new AModel(renderer->getDevice(), "res/teapot.obj");
 	orthoMesh = new OrthoMesh(renderer->getDevice(), renderer->getDeviceContext(), screenWidth, screenHeight);	// Full screen size
 	textureMgr->loadTexture(L"brick", L"res/brick1.dds");
+	textureMgr->loadTexture(L"wood", L"res/wood.png");
 
 	// initial shaders
 	textureShader = new TextureShader(renderer->getDevice(), hwnd);
@@ -195,7 +196,7 @@ void App1::finalPass()
 	// Render floor
 	mesh->sendData(renderer->getDeviceContext());
 	shadowShader->setShaderParameters(renderer->getDeviceContext(), worldMatrix, viewMatrix, projectionMatrix, 
-		textureMgr->getTexture(L"brick"), sceneMaps, sceneLights);
+		textureMgr->getTexture(L"wood"), sceneMaps, sceneLights);
 	shadowShader->render(renderer->getDeviceContext(), mesh->getIndexCount());
 
 	// Render model
@@ -285,6 +286,23 @@ void App1::gui()
 
 	ImGui::SliderFloat3("Light 2 Position", light2Position, -100, 100);
 	ImGui::SliderFloat3("Light 2 Direction", light2Direction, -180, 180);
+
+	ImGui::Separator();
+	ImGui::SliderFloat("Spotlight Cone Size", &inputtedConeSize, 0.0f, XMConvertToRadians(60.0f));
+	ImGui::SliderFloat("Material Specular Power", &inputtedMatSpecPower, -2.0f, 2.0f);
+	ImGui::ColorEdit4("Spotlight Color", reinterpret_cast<float*>(&inputtedSpotlightColor));
+	ImGui::ColorEdit4("Spotlight Specular", reinterpret_cast<float*>(&inputtedSpotlightSpecular));
+	ImGui::ColorEdit4("Spotlight Diffuse", reinterpret_cast<float*>(&inputtedDiffuse));
+	ImGui::ColorEdit4("Spotlight Ambient", reinterpret_cast<float*>(&inputtedAmbient));
+	ImGui::ColorEdit4("Spotlight Emissive", reinterpret_cast<float*>(&inputtedSpotlightEmissive));
+	//ImGui::SliderFloat("Spotlight Range", &inputtedSpotlightRange, 0.0f, 1000.0f);
+	ImGui::SliderFloat3("Spotlight Attenuation", reinterpret_cast<float*>(&inputtedSpotlightAttenuation), 0.01f, 10.0f);
+
+	light->setSpotlightAttributes(
+		inputtedSpotlightSpecular, inputtedConeSize, inputtedMatSpecPower,
+		inputtedSpotlightColor, inputtedSpotlightEmissive, inputtedSpotlightRange,
+		inputtedSpotlightAttenuation
+	);
 
 	// Update settings
 	light->generateOrthoMatrix((float)inputLightWidth, (float)inputLightLength, 0.1f, 100.f);

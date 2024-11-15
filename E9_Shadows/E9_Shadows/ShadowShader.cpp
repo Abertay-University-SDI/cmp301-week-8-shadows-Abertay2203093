@@ -158,7 +158,7 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	for (int i = 0; i < MAX_LIGHTS; i++) {
 		if (i < lights.size()) {
 			Light* light = lights.at(i);
-			bool isSpotlight = false;
+			bool isSpotlight = true;
 
 			if (light != nullptr) {
 
@@ -168,12 +168,14 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 					lightPtr->lights[i].spotLight.position = light->getPosition();
 					lightPtr->lights[i].spotLight.specular = light->getSpecularColour(); //XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
 					lightPtr->lights[i].spotLight.direction = light->getDirection();
-					lightPtr->lights[i].spotLight.spot = 96.0f;// light->getSpotlightCone(); //96.0f;
-					lightPtr->lights[i].spotLight.range = 400.0f; //light->getSpotlightRange(); //  400.0f;//
-					lightPtr->lights[i].spotLight.attenuation = XMFLOAT3(1.0f, 0.0f, 0.0f); //light->getSpotlightAttenuation(); // XMFLOAT3(1.0f, 0.0f, 0.0f);  //
-					lightPtr->lights[i].spotLight.materialSpecularPower = 1.0f; //light->getMaterialSpecularPower(); //1.0f;
-					lightPtr->lights[i].spotLight.color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); //light->getSpotlightColor(); //XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
-					lightPtr->lights[i].spotLight.emissive = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); //light->getSpotlightEmissive(); // XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
+					lightPtr->lights[i].spotLight.spot = light->getSpotlightCone(); //96.0f;
+					lightPtr->lights[i].spotLight.range = light->getSpotlightRange(); //  400.0f;//
+					lightPtr->lights[i].spotLight.attenuation =light->getSpotlightAttenuation(); // XMFLOAT3(1.0f, 0.0f, 0.0f);  //
+					lightPtr->lights[i].spotLight.materialSpecularPower = light->getMaterialSpecularPower(); //1.0f;
+					lightPtr->lights[i].spotLight.color = light->getSpotlightColor(); //XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
+					lightPtr->lights[i].spotLight.emissive = light->getSpotlightEmissive(); // XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
+					lightPtr->lights[i].lightEnabled = true;
+
 				}
 				else {
 					lightPtr->lights[i].directionalLight.ambient = light->getAmbientColour();
