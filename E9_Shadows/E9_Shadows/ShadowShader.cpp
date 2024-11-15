@@ -41,6 +41,7 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	D3D11_BUFFER_DESC matrixBufferDesc;
 	D3D11_SAMPLER_DESC samplerDesc;
 	D3D11_BUFFER_DESC lightBufferDesc;
+	D3D11_BUFFER_DESC cameraBufferDesc;
 
 	// Load (+ compile) shader files
 	loadVertexShader(vsFilename);
@@ -54,6 +55,14 @@ void ShadowShader::initShader(const wchar_t* vsFilename, const wchar_t* psFilena
 	matrixBufferDesc.MiscFlags = 0;
 	matrixBufferDesc.StructureByteStride = 0;
 	renderer->CreateBuffer(&matrixBufferDesc, NULL, &matrixBuffer);
+
+	cameraBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	cameraBufferDesc.ByteWidth = sizeof(CameraBufferType);
+	cameraBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	cameraBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	cameraBufferDesc.MiscFlags = 0;
+	cameraBufferDesc.StructureByteStride = 0;
+	renderer->CreateBuffer(&cameraBufferDesc, NULL, &cameraBuffer);
 
 	// Create a texture sampler state description.
 	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
@@ -100,7 +109,8 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
 	MatrixBufferType* dataPtr;
 	LightBufferType* lightPtr;
-	
+	CameraBufferType* cameraDataPtr;
+
 	// Transpose the matrices to prepare them for the shader.
 	XMMATRIX tworld = XMMatrixTranspose(worldMatrix);
 	XMMATRIX tview = XMMatrixTranspose(viewMatrix);
@@ -117,11 +127,11 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	for (int i = 0; i < MAX_LIGHTS; i++) {
 		if (i < lights.size()) {
 			Light* light = lights.at(i);
-			//XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
-			//XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getOrthoMatrix());
-
 			XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
-			XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getProjectionMatrix());
+			XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getOrthoMatrix());
+
+			//XMMATRIX tLightViewMatrix = XMMatrixTranspose(light->getViewMatrix());
+			//XMMATRIX tLightProjectionMatrix = XMMatrixTranspose(light->getProjectionMatrix());
 
 			dataPtr->lightView[i] = tLightViewMatrix;
 			dataPtr->lightProjection[i] = tLightProjectionMatrix;
@@ -130,6 +140,14 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	
 	deviceContext->Unmap(matrixBuffer, 0);
 	deviceContext->VSSetConstantBuffers(0, 1, &matrixBuffer);
+
+	// Camera buffer
+	deviceContext->Map(cameraBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	cameraDataPtr = (CameraBufferType*)mappedResource.pData;
+	cameraDataPtr->cameraPosition = cameraInput.cameraPosition;
+	cameraDataPtr->padding = 0.0f;
+	deviceContext->Unmap(cameraBuffer, 0);
+	deviceContext->VSSetConstantBuffers(1, 1, &cameraBuffer);
 
 	//Additional
 	// Send light data to pixel shader
@@ -140,12 +158,32 @@ void ShadowShader::setShaderParameters(ID3D11DeviceContext* deviceContext, const
 	for (int i = 0; i < MAX_LIGHTS; i++) {
 		if (i < lights.size()) {
 			Light* light = lights.at(i);
+			bool isSpotlight = false;
 
 			if (light != nullptr) {
-				lightPtr->lights[i].ambient = light->getAmbientColour();
-				lightPtr->lights[i].diffuse = light->getDiffuseColour();
-				lightPtr->lights[i].direction = light->getDirection();
-				lightPtr->lights[i].lightEnabled = true;
+
+				if (isSpotlight) {
+					lightPtr->lights[i].spotLight.ambient = light->getAmbientColour(); // XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f); //
+					lightPtr->lights[i].spotLight.diffuse = light->getDiffuseColour(); // XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); //
+					lightPtr->lights[i].spotLight.position = light->getPosition();
+					lightPtr->lights[i].spotLight.specular = light->getSpecularColour(); //XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f);
+					lightPtr->lights[i].spotLight.direction = light->getDirection();
+					lightPtr->lights[i].spotLight.spot = 96.0f;// light->getSpotlightCone(); //96.0f;
+					lightPtr->lights[i].spotLight.range = 400.0f; //light->getSpotlightRange(); //  400.0f;//
+					lightPtr->lights[i].spotLight.attenuation = XMFLOAT3(1.0f, 0.0f, 0.0f); //light->getSpotlightAttenuation(); // XMFLOAT3(1.0f, 0.0f, 0.0f);  //
+					lightPtr->lights[i].spotLight.materialSpecularPower = 1.0f; //light->getMaterialSpecularPower(); //1.0f;
+					lightPtr->lights[i].spotLight.color = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); //light->getSpotlightColor(); //XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
+					lightPtr->lights[i].spotLight.emissive = XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f); //light->getSpotlightEmissive(); // XMFLOAT4(1.0f, 1.0f, 0.0f, 1.0f);
+				}
+				else {
+					lightPtr->lights[i].directionalLight.ambient = light->getAmbientColour();
+					lightPtr->lights[i].directionalLight.diffuse = light->getDiffuseColour();
+					lightPtr->lights[i].directionalLight.direction = light->getDirection();
+					lightPtr->lights[i].directionalLight.position = light->getPosition();
+
+					lightPtr->lights[i].lightEnabled = true;
+				}
+				
 			}
 		}
 		else {

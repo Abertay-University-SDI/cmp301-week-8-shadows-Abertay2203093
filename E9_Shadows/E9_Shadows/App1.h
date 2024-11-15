@@ -62,11 +62,11 @@ private:
 	float widthOffset = 0;
 	float lengthOffset = 0;
 
-	float lightDirection[3] = {-16, -41, 75};
-	float lightPosition[3] = { -15.0f, 16.0f, -7.7f };
+	float lightPosition[3] = { -35.0f, 16.0f, 14.0f };
+	float lightDirection[3] = { 180.0f, -180.0f, 0.0f };
 
-	float light2Direction[3] = { -16, -41, 75 };
-	float light2Position[3] = { 15.0f, 16.0f, -7.7f };
+	float light2Position[3] = {35.0f, 16.0f, 14.0f };
+	float light2Direction[3] = { -180.0f, -180.0f, 0.0f };
 };
 
 #endif
